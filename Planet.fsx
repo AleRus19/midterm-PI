@@ -56,6 +56,7 @@ type WVMatrix () =
   let mutable dragged = false
   let mutable img = null
   let mutable typeLwc = -1
+  let mutable  op = -1;
   
   member this.WV = wv
   
@@ -117,7 +118,11 @@ type WVMatrix () =
     with get() = c
     and set(v) =
       c <- v
-
+   
+   member this.Operation
+    with get() = op
+    and set(v) = op <- v
+  
    member this.Light
     with get() = light
     and set(v) =
@@ -155,7 +160,8 @@ and LWCContainer() as this =
   let mutable speed = 0;
   let timer = new Timer (Interval=20)
   let timer_end = new Timer (Interval=20)
-   
+  let mutable planet = LWCControl()
+  let mutable bl=false
   let mkrect (sx, sy) (ex, ey) =
         Rectangle(min sx ex, min sy ey, abs(sx - ex), abs(sy - ey))
   let controls = System.Collections.ObjectModel.ObservableCollection<LWCControl>()
@@ -176,6 +182,9 @@ and LWCContainer() as this =
      controls.Add(LWButton(Text="ZoomOut",Type=3,Operation=8,Color=Brushes.LightGreen,Position=PointF(220.f,50.f),ClientSize=SizeF(60.f,30.f)))
      controls.Add(LWButton(Text="Image",Type=3,Operation=0,Color=Brushes.LightGreen,Position=PointF(290.f,50.f),ClientSize=SizeF(60.f,30.f)))
      controls.Add(LWButton(Text="Planet",Type=3,Operation=9,Color=Brushes.LightGreen,Position=PointF(290.f,10.f),ClientSize=SizeF(60.f,30.f)))
+     controls.Add(LWButton(Text="+",Type=3,Operation=10,Color=Brushes.LightGreen,Position=PointF(400.f,10.f),ClientSize=SizeF(60.f,30.f)))
+     controls.Add(LWButton(Text="-",Type=3,Operation=11,Color=Brushes.LightGreen,Position=PointF(400.f,50.f),ClientSize=SizeF(60.f,30.f)))
+     controls.Add(LWButton(Text="End",Type=3,Operation=12,Color=Brushes.LightGreen,Position=PointF(400.f,90.f),ClientSize=SizeF(60.f,30.f)))
    
     
    
@@ -208,6 +217,7 @@ and LWCContainer() as this =
   member this.Removee 
      with get() = removing
      and set(v) = removing <- v
+  
   
   member this.Left () = 
                 controls |> Seq.iter (fun c->
@@ -280,7 +290,19 @@ and LWCContainer() as this =
   
   member this.Image () = imaging <-true
   member this.Create () = create <-true
-                                     
+  member this.More() =
+                                              let cx,cy =planet.Width/2.f, single planet.Height /2.f
+                                              planet.WV.TranslateW(cx,cy)
+                                              planet.WV.ScaleW(1.1f,1.1f)
+                                              planet.WV.TranslateW(-cx,-cy)
+                                              this.Invalidate()
+  member this.Less() =
+                                              let cx,cy =planet.Width/2.f, single planet.Height /2.f
+                                              planet.WV.TranslateW(cx,cy)
+                                              planet.WV.ScaleW(1.f/1.1f,1.f/1.1f)
+                                              planet.WV.TranslateW(-cx,-cy)
+                                              this.Invalidate()
+  member this.End() =  bl <- false      
   
   override this.OnKeyDown e =
      if e.KeyCode = Keys.Q && e.KeyCode = Keys.W  then 
@@ -377,9 +399,11 @@ and LWCContainer() as this =
       let p = c.WV.TransformPointV(PointF(single e.X, single e.Y))
       let evt = new MouseEventArgs(e.Button, e.Clicks, int p.X, int p.Y, e.Delta)
       c.OnMouseDown(evt)
+      if c.Type<>3 then 
+        planet <- c
+        bl<-true
+    
       this.Invalidate()
-      //controls.RemoveAt(controls.IndexOf(c))
-      //controls.Add(c)
       let dx = e.X - int c.Left
       let dy = e.Y - int c.Top
       if c.Type <> 3 then 
@@ -416,7 +440,7 @@ and LWCContainer() as this =
                                 let imagename = dlg.FileName
                                 printfn "%A" imagename
                                 let myPicture : Bitmap = new Bitmap(imagename)
-                                controls.Add(Pianeti(Image=myPicture,Position=PointF(single sx,single sy),ClientSize=SizeF(100.f,100.f)))
+                                controls.Add(Pianeti(Type=0,Image=myPicture,Position=PointF(single sx,single sy),ClientSize=SizeF(100.f,100.f)))
                                 newbox <-None
                                 create <- false
                                 this.Invalidate()
@@ -447,7 +471,10 @@ and LWCContainer() as this =
       //evt.Graphics.SetClip(new RectangleF(c.Position, c.ClientSize))//un vertice e una dimensione, il clipping non supporta la rotazione non abbiamo assunto che è ruotato
       
       evt.Graphics.Transform <- c.WV.WV //cambiamo la matrice di trasformazione
-      c.OnPaint(evt)//passiamo all'onpaint un nuovo evento, prima passavamo quello del padre
+      if c.Operation <> 10 && c.Operation <> 11 && c.Operation <> 12 then  
+        c.OnPaint(evt)//passiamo all'onpaint un nuovo evento, prima passavamo quello del padre
+      else if bl=true then 
+        c.OnPaint(evt)//passiamo all'onpaint un nuovo evento, prima passavamo quello del padre
       //così è ritagliato nel suo spazio di coordinate
       e.Graphics.Restore(bkg)
     )
@@ -481,12 +508,9 @@ and LWButton() =
   inherit LWCControl()
   let mutable drag= None
   let mutable txt = " "
-  let mutable  op = -1;
   let mutable cont  = ResizeArray<LWCControl>()
 
-  member this.Operation
-    with get() = op
-    and set(v) = op <- v
+
 
 
   member this.Text
@@ -529,6 +553,12 @@ and LWButton() =
                         p.ZoomOut()
                      if this.Operation = 9  then 
                         p.Create()
+                     if this.Operation = 10  then 
+                        p.More()
+                     if this.Operation = 11  then 
+                        p.Less()
+                     if this.Operation = 12  then 
+                        p.End()
                                  
                          
                      
