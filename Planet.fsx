@@ -321,7 +321,7 @@ and LWCContainer() as this =
                                                 c.WV.RotateW(-10.f)
                                                 c.WV.TranslateW(-cx, -cy)
                                                 rotation <- rotation + 1 
-                                                speed <- speed+ 3
+                                                speed <- speed+ 4
                                              if c.Type = 4 then 
                                                 let cx, cy = c.Width/2.f , c.Height / 2.f  
                                                 c.WV.TranslateW(cx, cy)
@@ -344,7 +344,7 @@ and LWCContainer() as this =
                                                 c.WV.TranslateW(cx, cy)
                                                 c.WV.RotateW(10.f)
                                                 c.WV.TranslateW(-cx, -cy)
-                                                speed <- speed+ 3
+                                                speed <- speed+ 4
                                                 rotation <- rotation - 1 
                                              if c.Type = 4 then 
                                                let cx, cy = c.Width/2.f , c.Height / 2.f  
@@ -367,7 +367,7 @@ and LWCContainer() as this =
                                                 target <- c
                                                 c.WV.TranslateW(0.f, -10.f)
                                                 let pt= PointF(c.Left,c.Top)
-                                                speed <- speed+ 3
+                                                speed <- speed+ 4
                                               
                                      )
                 controls.Move(controls.IndexOf(target),controls.Count-1)
@@ -627,7 +627,7 @@ and Navicella() =
   
 
   override this.OnMouseMove e =
-     printfn " " 
+     printfn " "
   
 
 let lwcc = new LWCContainer(Dock=DockStyle.Fill) //deve occupare tutto lo spazio
