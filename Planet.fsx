@@ -56,6 +56,7 @@ type WVMatrix () =
   let mutable dragged = false
   let mutable img = null
   let mutable typeLwc = -1
+
   let mutable  op = -1;
   
   member this.WV = wv
@@ -158,6 +159,7 @@ and LWCContainer() as this =
   let mutable imaging = false ;
   let mutable create = false;
   let mutable speed = 0;
+  let mutable rotation = 0
   let timer = new Timer (Interval=20)
   let timer_end = new Timer (Interval=20)
   let mutable planet = LWCControl()
@@ -185,17 +187,18 @@ and LWCContainer() as this =
      controls.Add(LWButton(Text="+",Type=3,Operation=10,Color=Brushes.LightGreen,Position=PointF(400.f,10.f),ClientSize=SizeF(60.f,30.f)))
      controls.Add(LWButton(Text="-",Type=3,Operation=11,Color=Brushes.LightGreen,Position=PointF(400.f,50.f),ClientSize=SizeF(60.f,30.f)))
      controls.Add(LWButton(Text="End",Type=3,Operation=12,Color=Brushes.LightGreen,Position=PointF(400.f,90.f),ClientSize=SizeF(60.f,30.f)))
+     controls.Add(Navicella(Type=4,Color=Brushes.LightGreen,Position=PointF(900.f,10.f),ClientSize=SizeF(35.f,35.f)))
    
     
    
-     (*timer.Tick.Add(fun _ -> 
+     timer.Tick.Add(fun _ -> 
             controls |>Seq.iter (fun c ->
               if c.Type=1 then 
-                c.WV.TranslateW(0.f, -2.f) 
+                c.WV.TranslateW(0.f, -1.f) 
                 this.Invalidate()
            )
      )
-     *)
+     
      timer_end.Tick.Add(fun _ -> 
             controls |>Seq.iter (fun c ->
               if c.Type=1 then 
@@ -221,13 +224,13 @@ and LWCContainer() as this =
   
   member this.Left () = 
                 controls |> Seq.iter (fun c->
-                                            if c.Type <> 3 then 
+                                            if c.Type <> 3 && c.Type<>4 then 
                                                 c.WV.TranslateV(10.f,0.f) 
                                                 this.Invalidate()
             )
   member this.Right () =
                 controls |> Seq.iter ( fun c-> 
-                                            if c.Type <> 3 then 
+                                            if c.Type <> 3 && c.Type<>4 then 
                                               c.WV.TranslateV(-10.f,0.f)
                                               this.Invalidate()
                                   )
@@ -235,7 +238,7 @@ and LWCContainer() as this =
   
   member this.Up () =
                 controls |> Seq.iter ( fun c-> 
-                                            if c.Type <> 3 then 
+                                            if c.Type <>3 && c.Type<>4 then 
                                               c.WV.TranslateV(0.f,10.f)
                                               this.Invalidate()
                                   )   
@@ -243,14 +246,14 @@ and LWCContainer() as this =
 
   member this.Down () =
                 controls |> Seq.iter ( fun c-> 
-                                            if c.Type <> 3 then 
+                                            if c.Type <> 3 && c.Type<>4 then 
                                               c.WV.TranslateV(0.f,-10.f)
                                               this.Invalidate()
                                   )   
   
   member this.RotateSx () =
                 controls |> Seq.iter ( fun c-> 
-                                            if c.Type <> 3 then 
+                                            if c.Type <> 3 && c.Type<>4 then 
                                               let cx,cy =single  this.ClientSize.Width/2.f, single this.ClientSize.Height /2.f
                                               c.WV.TranslateV(cx,cy)
                                               c.WV.RotateV(-10.f)
@@ -260,7 +263,7 @@ and LWCContainer() as this =
   
   member this.RotateDx () =
                 controls |> Seq.iter ( fun c-> 
-                                            if c.Type <> 3 then 
+                                            if c.Type <> 3 && c.Type<>4 then 
                                               let cx,cy =single  this.ClientSize.Width/2.f, single this.ClientSize.Height /2.f
                                               c.WV.TranslateV(cx,cy)
                                               c.WV.RotateV(10.f)
@@ -271,7 +274,7 @@ and LWCContainer() as this =
   
   member this.ZoomIn () =
                 controls |> Seq.iter ( fun c-> 
-                                            if c.Type <> 3 then 
+                                            if c.Type <> 3 && c.Type<>4 then 
                                               let cx,cy =single  this.ClientSize.Width/2.f, single this.ClientSize.Height /2.f
                                               c.WV.TranslateV(cx,cy)
                                               c.WV.ScaleV(1.1f,1.1f)
@@ -280,7 +283,7 @@ and LWCContainer() as this =
                                   )   
   member this.ZoomOut () =
                 controls |> Seq.iter ( fun c-> 
-                                            if c.Type <> 3 then 
+                                            if c.Type <> 3 && c.Type<>4 then 
                                               let cx,cy =single  this.ClientSize.Width/2.f, single this.ClientSize.Height /2.f
                                               c.WV.TranslateV(cx,cy)
                                               c.WV.ScaleV(1.f/1.1f,1.f/1.1f)
@@ -306,6 +309,7 @@ and LWCContainer() as this =
   
   override this.OnKeyDown e =
      if e.KeyCode = Keys.Q && e.KeyCode = Keys.W  then 
+                timer.Start()
                 timer_end.Stop()
                 let mutable target = LWCControl() 
                 controls |> Seq.iter(fun c->
@@ -316,13 +320,21 @@ and LWCContainer() as this =
                                                 c.WV.TranslateW(cx, cy)
                                                 c.WV.RotateW(-10.f)
                                                 c.WV.TranslateW(-cx, -cy)
+                                                rotation <- rotation + 1 
                                                 speed <- speed+ 3
+                                             if c.Type = 4 then 
+                                                let cx, cy = c.Width/2.f , c.Height / 2.f  
+                                                c.WV.TranslateW(cx, cy)
+                                                c.WV.RotateW(-10.f)
+                                                c.WV.TranslateW(-cx, -cy)
+                                       
                                                 
                                      )
                 controls.Move(controls.IndexOf(target),controls.Count-1)
                 this.Invalidate()
      if e.KeyCode = Keys.E && e.KeyCode = Keys.W  then 
                 timer_end.Stop()
+                timer.Start()
                 let mutable target = LWCControl() 
                 controls |> Seq.iter(fun c->
                                              if c.Type = 1 then 
@@ -333,6 +345,13 @@ and LWCContainer() as this =
                                                 c.WV.RotateW(10.f)
                                                 c.WV.TranslateW(-cx, -cy)
                                                 speed <- speed+ 3
+                                                rotation <- rotation - 1 
+                                             if c.Type = 4 then 
+                                               let cx, cy = c.Width/2.f , c.Height / 2.f  
+                                               c.WV.TranslateW(cx, cy)
+                                               c.WV.RotateW(10.f)
+                                               c.WV.TranslateW(-cx, -cy)
+                                       
                                                 
                                      )
                 controls.Move(controls.IndexOf(target),controls.Count-1)
@@ -340,23 +359,31 @@ and LWCContainer() as this =
     
     
       else if e.KeyCode = Keys.W then  
+                timer.Start()
                 timer_end.Stop()
                 let mutable target = LWCControl() 
                 controls |> Seq.iter(fun c->
                                              if c.Type = 1 then 
                                                 target <- c
-                                                c.WV.TranslateW(0.f, -10.f) 
+                                                c.WV.TranslateW(0.f, -10.f)
+                                                let pt= PointF(c.Left,c.Top)
                                                 speed <- speed+ 3
-                                                
+                                              
                                      )
                 controls.Move(controls.IndexOf(target),controls.Count-1)
                 this.Invalidate()
-                                                // wv *= T(0,10)
+                                         
       else  if e.KeyCode= Keys.E then    
                    let mutable target = LWCControl() 
                    controls |> Seq.iter(fun c->
                                              if c.Type = 1 then 
                                                target <- c
+                                               let cx, cy = c.Width/2.f , c.Height / 2.f  
+                                               c.WV.TranslateW(cx, cy)
+                                               c.WV.RotateW(10.f)
+                                               rotation <- rotation + 1 
+                                               c.WV.TranslateW(-cx, -cy)
+                                             if c.Type = 4 then 
                                                let cx, cy = c.Width/2.f , c.Height / 2.f  
                                                c.WV.TranslateW(cx, cy)
                                                c.WV.RotateW(10.f)
@@ -373,7 +400,14 @@ and LWCContainer() as this =
                                                let cx, cy = c.Width/2.f , c.Height / 2.f  
                                                c.WV.TranslateW(cx, cy)
                                                c.WV.RotateW(-10.f)
+                                               rotation <- rotation - 1 
                                                c.WV.TranslateW(-cx, -cy)
+                                             if c.Type = 4 then 
+                                               let cx, cy = c.Width/2.f , c.Height / 2.f  
+                                               c.WV.TranslateW(cx, cy)
+                                               c.WV.RotateW(-10.f)
+                                               c.WV.TranslateW(-cx, -cy)
+                                       
                                         )
                    controls.Move(controls.IndexOf(target),controls.Count-1)
                    this.Invalidate()
@@ -383,7 +417,7 @@ and LWCContainer() as this =
 
    override this.OnKeyUp e =
     match e.KeyCode with
-     |Keys.W -> //timer.Stop()
+     |Keys.W -> timer.Stop()
                 timer_end.Start()
      | _ ->()
   
@@ -414,7 +448,15 @@ and LWCContainer() as this =
              let imagename = dlg.FileName
              let myPicture : Bitmap = new Bitmap(imagename)
              c.Image <- myPicture
-             imaging <- false
+             let mutable radar = LWCControl()
+             if c.Type=1 then 
+               controls |> Seq.iter (fun c -> 
+                                         if c.Type=4 then radar <- c
+                                  )
+               radar.Image <- myPicture
+               drag <-None
+           imaging <- false
+           drag <-None
       if c.Type <> 3 then 
         drag <- Some(c,dx,dy)
     | None ->  if create = true then newbox <-Some(e.X,e.Y)
@@ -438,12 +480,13 @@ and LWCContainer() as this =
                               dlg.Filter <- "|*.BMP;*.JPG;*.GIF;*.PNG"
                               if dlg.ShowDialog() = DialogResult.OK then
                                 let imagename = dlg.FileName
-                                printfn "%A" imagename
                                 let myPicture : Bitmap = new Bitmap(imagename)
                                 controls.Add(Pianeti(Type=0,Image=myPicture,Position=PointF(single sx,single sy),ClientSize=SizeF(100.f,100.f)))
-                                newbox <-None
-                                create <- false
                                 this.Invalidate()
+                              newbox <-None
+                              create <- false
+                              drag <-None
+                              
     |None -> ()
 
    
@@ -509,18 +552,11 @@ and LWButton() =
   let mutable drag= None
   let mutable txt = " "
   let mutable cont  = ResizeArray<LWCControl>()
-
-
-
-
+  
   member this.Text
     with get() = txt
     and set(v) = txt <- v
-  
-  (*member this.Container
-    with get() = cont
-    and set(v:ResizeArray<LWCControl>) = cont <- v*)
-
+ 
   override this.OnPaint(e) =
     let g = e.Graphics
     if not (isNull this.Image) then 
@@ -583,8 +619,8 @@ and Navicella() =
         g.DrawImage(this.Image, RectangleF(0.f,0.f,this.Width,this.Height))
     else
         g.FillRectangle(this.Color, 0.f, 0.f, this.Width, this.Height)
-        g.DrawString("Image ship",SystemFonts.DefaultFont, System.Drawing.Brushes.White, new RectangleF(0.f,0.f,this.Width |> single,this.Height |>single));
- 
+        if this.Type = 1 then g.DrawString("Image ship",SystemFonts.DefaultFont, System.Drawing.Brushes.White, new RectangleF(0.f,0.f,this.Width |> single,this.Height |>single));
+        else g.DrawString("Radar",SystemFonts.DefaultFont, System.Drawing.Brushes.White, new RectangleF(0.f,0.f,this.Width |> single,this.Height |>single));
     
   override this.OnMouseDown(e) =
      printfn "%A" e.Location
@@ -595,6 +631,6 @@ and Navicella() =
   
 
 let lwcc = new LWCContainer(Dock=DockStyle.Fill) //deve occupare tutto lo spazio
-let f = new Form(Text="Prova",MinimumSize=Size(1000,1000))
+let f = new Form(Text="Prova",MinimumSize=Size(1000,500))
 f.Controls.Add(lwcc)
 f.Show()
